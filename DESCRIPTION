@@ -1,0 +1,20 @@
+Package: IntegrinECM
+Type: Package
+Title: Structure-Aware Scoring of Integrin and Extracellular Matrix Assemblies
+Version: 0.1.0
+Authors@R:
+    person("Yiming", "Liang", email = "l19963860854@gmail.com",
+           role = c("aut", "cre"))
+Description: Converts non-negative, linear-scale gene-expression measurements
+    into sample-specific scores for predefined molecular structures. The package
+    implements non-negative least-squares allocation and a stoichiometry-weighted
+    geometric mean, followed by within-sample normalization, percentage scoring,
+    and ranking.
+License: MIT + file LICENSE
+URL: https://github.com/LIANGYM-LEO/IntegrinECM
+BugReports: https://github.com/LIANGYM-LEO/IntegrinECM/issues
+Encoding: UTF-8
+Depends: R (>= 4.1.0)
+Imports:
+    nnls,
+    writexl

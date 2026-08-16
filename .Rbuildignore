@@ -1,0 +1,6 @@
+^\.git$
+^\.github$
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.DS_Store$
+^inst/\.DS_Store$
