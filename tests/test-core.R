@@ -101,11 +101,18 @@ stopifnot(ncol(example_expression) == 10L)
 stopifnot(nrow(example_metadata) == 10L)
 stopifnot(identical(colnames(example_expression), example_metadata$sample_id))
 
-example_result <- score_integrin_ecm(example_expression, example_metadata)
+example_result <- score_integrin_ecm_files(
+  example_expression_path,
+  example_metadata_path
+)
 stopifnot(identical(
   names(example_result$results),
   c("integrin_nnls", "collagen_nnls", "laminin_geomean", "other_ecm_geomean")
 ))
+stopifnot(identical(example_result$run_status, "completed"))
+stopifnot(all(example_result$input_audit$input_mode == "file"))
+stopifnot(all(file.exists(example_result$input_audit$path)))
+stopifnot(all(nchar(example_result$input_audit$md5) == 32L))
 example_workbook <- tempfile(fileext = ".xlsx")
 example_sheets <- write_score_workbook(example_result, example_workbook)
 stopifnot(file.exists(example_workbook), file.info(example_workbook)$size > 0)
@@ -114,3 +121,95 @@ stopifnot(identical(
   c("01_samples", "02_run_info", names(example_result$results))
 ))
 unlink(example_workbook)
+
+# Every intermediate and selected reference can be exported on request.
+complete_workbook <- tempfile(fileext = ".xlsx")
+complete_sheets <- write_score_workbook(
+  example_result,
+  complete_workbook,
+  optional_sheets = "all"
+)
+stopifnot(file.exists(complete_workbook), file.info(complete_workbook)$size > 0)
+stopifnot(all(c(
+  "input_audit",
+  "reference_integrin_ecm",
+  "collagen_nnls_coverage",
+  "collagen_nnls_composition",
+  "laminin_geomean_u",
+  "laminin_geomean_q",
+  "collagen_annotations",
+  "collagen_components"
+) %in% complete_sheets))
+unlink(complete_workbook)
+
+# All bundled reference resources can be exported without a scoring run.
+reference_workbook <- tempfile(fileext = ".xlsx")
+reference_sheets <- write_reference_workbook(reference_workbook)
+stopifnot(file.exists(reference_workbook), file.info(reference_workbook)$size > 0)
+stopifnot(length(reference_sheets) == 9L)
+stopifnot(all(c(
+  "reference_integrin_ecm",
+  "ref_integrin_catalog",
+  "ref_integrin_components",
+  "ref_collagen_catalog",
+  "ref_collagen_components",
+  "ref_laminin_catalog",
+  "ref_laminin_components",
+  "ref_other_ecm_catalog",
+  "ref_other_ecm_components"
+) %in% reference_sheets))
+unlink(reference_workbook)
+
+# Separately executed compatible modules combine without changing module names.
+integrin_only <- score_integrin_ecm(
+  example_expression,
+  example_metadata,
+  modules = list(integrin = "nnls")
+)
+collagen_only <- score_integrin_ecm(
+  example_expression,
+  example_metadata,
+  modules = list(collagen = "nnls")
+)
+combined <- combine_integrin_ecm_results(
+  integrin_run = integrin_only,
+  collagen_run = collagen_only
+)
+stopifnot(identical(names(combined$results), c("integrin_nnls", "collagen_nnls")))
+stopifnot(identical(combined$modules, list(integrin = "nnls", collagen = "nnls")))
+stopifnot(nrow(combined$source_runs) == 2L)
+stopifnot(all(combined$input_audit$source_result %in% c("integrin_run", "collagen_run")))
+
+duplicate_error <- try(
+  combine_integrin_ecm_results(integrin_only, integrin_only),
+  silent = TRUE
+)
+stopifnot(inherits(duplicate_error, "try-error"))
+
+incompatible <- collagen_only
+incompatible$parameters$output_digits <- 3L
+parameter_error <- try(
+  combine_integrin_ecm_results(integrin_only, incompatible),
+  silent = TRUE
+)
+stopifnot(inherits(parameter_error, "try-error"))
+
+incompatible_samples <- collagen_only
+incompatible_samples$samples$analysis_group[[1L]] <- "Different group"
+sample_error <- try(
+  combine_integrin_ecm_results(integrin_only, incompatible_samples),
+  silent = TRUE
+)
+stopifnot(inherits(sample_error, "try-error"))
+
+file_integrin <- example_result
+file_integrin$results <- file_integrin$results["integrin_nnls"]
+file_collagen <- example_result
+file_collagen$results <- file_collagen$results["collagen_nnls"]
+file_collagen$input_audit$md5[file_collagen$input_audit$input_type == "expression"] <-
+  paste(rep("0", 32L), collapse = "")
+checksum_error <- try(
+  combine_integrin_ecm_results(file_integrin, file_collagen),
+  silent = TRUE
+)
+stopifnot(inherits(checksum_error, "try-error"))

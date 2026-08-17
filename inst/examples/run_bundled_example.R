@@ -11,15 +11,15 @@ sample_metadata_file <- system.file(
 )
 output_file <- file.path(getwd(), "IntegrinECM_10_sample_example.xlsx")
 
-E <- read_expression_matrix(expression_file, gene_id = "gene")
-metadata <- read_sample_metadata(
-  sample_metadata_file,
+result <- score_integrin_ecm_files(
+  expression_file = expression_file,
+  sample_metadata_file = sample_metadata_file,
+  gene_id = "gene",
   sample_id = "sample_id",
   group = "analysis_group"
 )
-
-result <- score_integrin_ecm(E, metadata)
 write_score_workbook(result, output_file)
 
 print(result)
+print(result$input_audit)
 cat("Workbook:", normalizePath(output_file, mustWork = TRUE), "\n")

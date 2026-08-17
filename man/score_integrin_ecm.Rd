@@ -1,6 +1,7 @@
 \name{score_integrin_ecm}
 \alias{score_integrin_ecm}
 \alias{score_integrin_ecm_files}
+\alias{combine_integrin_ecm_results}
 \alias{print.integrin_ecm_result}
 \title{Run modular Integrin-ECM scoring}
 \usage{
@@ -31,6 +32,8 @@ score_integrin_ecm_files(
   duplicate_rule = "error",
   ...
 )
+
+combine_integrin_ecm_results(...)
 }
 \arguments{
   \item{expression}{Non-negative gene-by-sample expression matrix.}
@@ -49,7 +52,8 @@ score_integrin_ecm_files(
   \item{sample_id}{Metadata sample-column name.}
   \item{group}{Metadata group-column name.}
   \item{duplicate_rule}{Duplicate-gene rule.}
-  \item{...}{Additional arguments passed to \code{score_integrin_ecm}.}
+  \item{...}{For \code{score_integrin_ecm_files}, additional arguments passed to \code{score_integrin_ecm}. For \code{combine_integrin_ecm_results}, two or more result objects or one list of result objects.}
 }
-\description{Runs selected method-object modules and returns one structured result.}
+\description{Runs selected method-object modules, records reproducibility information, or combines compatible structured results.}
 \value{An \code{integrin_ecm_result}.}
+\details{When results are combined, sample metadata and scoring parameters must match. If expression-file checksums are available, they must also agree. Duplicate method-object modules are rejected.}
