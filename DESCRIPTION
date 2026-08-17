@@ -1,7 +1,7 @@
 Package: IntegrinECM
 Type: Package
 Title: Structure-Aware Scoring of Integrin and Extracellular Matrix Assemblies
-Version: 0.1.0
+Version: 0.1.1
 Authors@R:
     person("Yiming", "Liang", email = "l19963860854@gmail.com",
            role = c("aut", "cre"))

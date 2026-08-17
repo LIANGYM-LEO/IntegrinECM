@@ -29,7 +29,7 @@ Download the release archive and install it using its full path:
 
 ```r
 install.packages(
-  "IntegrinECM_0.1.0.tar.gz",
+  "IntegrinECM_0.1.1.tar.gz",
   repos = NULL,
   type = "source"
 )
@@ -57,6 +57,10 @@ write_score_workbook(
 )
 ```
 
+Workbook output is written directly with `writexl` for portability across
+macOS, Windows, and Linux. The package does not unpack and rebuild XLSX files
+to force a system-specific font.
+
 Default method-object combinations are:
 
 - `integrin_nnls`
@@ -76,6 +80,38 @@ Bundled reference resources define the supported Integrin, Collagen, Laminin,
 and Other-ECM structures and the curated 284-record Integrin--ECM interaction
 table. Collagen score-column labels display the chain stoichiometry, for example
 `Collagen I [(COL1A1)2(COL1A2)1]`.
+
+## Bundled 10-sample example
+
+Two small CSV files provide a directly runnable input example. They contain a
+fixed, randomly selected subset of 10 TCGA-BRCA solid-tissue Normal samples
+derived from gene-expression data obtained through the NCI Genomic Data
+Commons. The expression columns and metadata sample identifiers are stored in
+the same order. These data are included only to demonstrate the software
+workflow and are not intended as an analytical cohort.
+
+```r
+expression_file <- system.file(
+  "extdata", "example_expression_10_samples.csv",
+  package = "IntegrinECM"
+)
+metadata_file <- system.file(
+  "extdata", "example_sample_metadata_10_samples.csv",
+  package = "IntegrinECM"
+)
+
+E_example <- read_expression_matrix(expression_file, gene_id = "gene")
+metadata_example <- read_sample_metadata(metadata_file)
+example_result <- score_integrin_ecm(E_example, metadata_example)
+
+write_score_workbook(
+  example_result,
+  "IntegrinECM_10_sample_example.xlsx"
+)
+```
+
+The same workflow is available as
+`system.file("examples", "run_bundled_example.R", package = "IntegrinECM")`.
 
 ## Selective execution
 

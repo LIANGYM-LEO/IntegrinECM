@@ -84,3 +84,33 @@ stopifnot(identical(
   collagen$catalog$structure_label[[1L]],
   "Collagen I [(COL1A1)2(COL1A2)1]"
 ))
+
+# The bundled example inputs are strictly paired and run through all defaults.
+example_expression_path <- system.file(
+  "extdata", "example_expression_10_samples.csv",
+  package = "IntegrinECM"
+)
+example_metadata_path <- system.file(
+  "extdata", "example_sample_metadata_10_samples.csv",
+  package = "IntegrinECM"
+)
+stopifnot(nzchar(example_expression_path), nzchar(example_metadata_path))
+example_expression <- read_expression_matrix(example_expression_path)
+example_metadata <- read_sample_metadata(example_metadata_path)
+stopifnot(ncol(example_expression) == 10L)
+stopifnot(nrow(example_metadata) == 10L)
+stopifnot(identical(colnames(example_expression), example_metadata$sample_id))
+
+example_result <- score_integrin_ecm(example_expression, example_metadata)
+stopifnot(identical(
+  names(example_result$results),
+  c("integrin_nnls", "collagen_nnls", "laminin_geomean", "other_ecm_geomean")
+))
+example_workbook <- tempfile(fileext = ".xlsx")
+example_sheets <- write_score_workbook(example_result, example_workbook)
+stopifnot(file.exists(example_workbook), file.info(example_workbook)$size > 0)
+stopifnot(identical(
+  example_sheets,
+  c("01_samples", "02_run_info", names(example_result$results))
+))
+unlink(example_workbook)

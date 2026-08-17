@@ -12,7 +12,7 @@ write_score_workbook(
   result,
   path,
   optional_sheets = character(0),
-  font_name = "Arial"
+  font_name = NULL
 )
 }
 \arguments{
@@ -23,7 +23,7 @@ write_score_workbook(
   \item{group}{Metadata group-column name.}
   \item{result}{An \code{integrin_ecm_result}.}
   \item{optional_sheets}{Optional technical workbook sheets.}
-  \item{font_name}{Workbook font name.}
+  \item{font_name}{Deprecated compatibility argument. Font post-processing is no longer applied because rebuilding XLSX files was not reliable across operating systems.}
 }
 \description{Reads canonical CSV inputs and writes compact or expanded result workbooks.}
 \value{An expression matrix, metadata data frame, or invisible sheet-name vector.}

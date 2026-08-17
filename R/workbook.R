@@ -57,36 +57,6 @@
   )
 }
 
-.set_xlsx_font <- function(path, font_name = "Arial") {
-  unpack_dir <- tempfile("integrin_ecm_xlsx_")
-  rebuilt_path <- tempfile(fileext = ".xlsx")
-  dir.create(unpack_dir, recursive = TRUE)
-  on.exit(unlink(c(unpack_dir, rebuilt_path), recursive = TRUE, force = TRUE), add = TRUE)
-  utils::unzip(path, exdir = unpack_dir)
-  styles_path <- file.path(unpack_dir, "xl", "styles.xml")
-  if (!file.exists(styles_path)) return(invisible(path))
-  styles_xml <- paste(readLines(styles_path, warn = FALSE, encoding = "UTF-8"), collapse = "\n")
-  styles_xml <- gsub(
-    '(<name val=")[^"]+("/>)',
-    paste0("\\1", font_name, "\\2"),
-    styles_xml,
-    perl = TRUE
-  )
-  styles_xml <- gsub('<scheme val="[^"]+"/>', "", styles_xml, perl = TRUE)
-  writeLines(styles_xml, styles_path, useBytes = TRUE)
-
-  files <- list.files(unpack_dir, recursive = TRUE, all.files = TRUE, no.. = TRUE)
-  old_directory <- getwd()
-  on.exit(setwd(old_directory), add = TRUE)
-  setwd(unpack_dir)
-  utils::zip(rebuilt_path, files, flags = "-q")
-  setwd(old_directory)
-  if (!file.copy(rebuilt_path, path, overwrite = TRUE)) {
-    stop("Failed to apply workbook font.", call. = FALSE)
-  }
-  invisible(path)
-}
-
 #' Write an Integrin-ECM result workbook
 #'
 #' The default workbook contains sample metadata, run information, and one
@@ -96,13 +66,15 @@
 #' @param path Output `.xlsx` path.
 #' @param optional_sheets Any combination of `"raw_long"`, `"summary"`,
 #'   `"diagnostics"`, `"fitted"`, or `"annotations"`.
-#' @param font_name Workbook font name.
+#' @param font_name Deprecated compatibility argument. Font post-processing is
+#'   no longer applied because unpacking and rebuilding XLSX files was not
+#'   reliable across operating systems.
 #' @return Invisibly returns the written sheet names.
 write_score_workbook <- function(
     result,
     path,
     optional_sheets = character(0),
-    font_name = "Arial") {
+    font_name = NULL) {
   if (!inherits(result, "integrin_ecm_result")) {
     stop("result must be an integrin_ecm_result.", call. = FALSE)
   }
@@ -112,6 +84,12 @@ write_score_workbook <- function(
   }
   if (!requireNamespace("writexl", quietly = TRUE)) {
     stop("Package 'writexl' is required to write workbooks.", call. = FALSE)
+  }
+  if (!is.null(font_name)) {
+    warning(
+      "font_name is deprecated and is not applied; the workbook uses the portable writexl default style.",
+      call. = FALSE
+    )
   }
 
   sheets <- list(
@@ -144,6 +122,8 @@ write_score_workbook <- function(
 
   dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
   writexl::write_xlsx(sheets, path)
-  .set_xlsx_font(path, font_name = font_name)
+  if (!file.exists(path) || is.na(file.info(path)$size) || file.info(path)$size <= 0) {
+    stop("Workbook was not created successfully.", call. = FALSE)
+  }
   invisible(names(sheets))
 }
